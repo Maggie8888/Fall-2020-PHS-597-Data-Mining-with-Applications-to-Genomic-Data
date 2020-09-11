@@ -67,7 +67,7 @@ class Algorithm:
 ## X     data matrix of independent variables
 ## Y     data matrix of dependent variables
 ## tol1   the tolerant of convergence 
-## tol2   control the magnitude of shrinkage of coefficients in regression
+## tol2   the tolerant of convergence 
 ###
 ## Outputs:
 ## T     score matrix of X
