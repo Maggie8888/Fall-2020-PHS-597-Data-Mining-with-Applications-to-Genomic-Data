@@ -15,100 +15,186 @@ sdc = sqrt(apply(xc, 2, crossprod)/nrow(predictors))
 xs = sweep(xc, 2, sdc, "/")
 ys = scale(Y)*sqrt(n/(n-1))
 
-### step 2 define functions ##########
-##PLS   Partial Least Squares Regrassion
-##between the independent variables, X and dependent Y as
-## X = T*P' + E;
-## Y = U*Q' + F = T*B*Q' + F1;
-##
-## Inputs:
-## X     data matrix of independent variables
-## Y     data matrix of dependent variables
-## tol1  the tolerant of convergence 
-## tol2  the tolerant of convergence 
-###
-## Outputs:
-## T     score matrix of X
-## P     loading matrix of X
-## U     score matrix of Y
-## Q     loading matrix of Y
-## B     matrix of regression coefficient
-## W     weight matrix of X
-## Using the PLS model, for new X1, Y1 can be predicted as
-## Y1 = (X1*P)*B*Q' = X1*(P*B*Q')
-## or
-## Y1 = X1*(W*inv(P'*W)*inv(T'*T)*T'*Y)
-##
-## Without Y provided, the function will return the principal components as
-## X = T*P' + E
-##
-PLS<-function(X,Y,tol1,tol2){
-  rX<-dim(X)[1]
-  cX<-dim(X)[2]
-  rY<-dim(Y)[1]
-  cY<-dim(Y)[2]
-## Allocate memory to the maximum size 
-n=max(cX,cY)
-T=matrix(rep(0,rX*n),nrow=rX,ncol=n)
-P=matrix(rep(0,cX*n),nrow=cX,ncol=n)
-U=matrix(rep(0,rY*n),nrow=rY,ncol=n)
-Q=matrix(rep(0,r=cY*n),nrow=cY,ncol=n)
-B=matrix(rep(0,n*n),nrow=n,ncol=n)
-W=P
-k=0
-## iteration loop if residual is larger than specfied
-while (norm(Y)>tol1 && k<n && !is.na(norm(Y,"2"))){
-## choose the column of x has the largest square of sum as t.
-## choose the column of y has the largest square of sum as u.    
-tidx =  which.max(apply(X, 2, function(x) sum(t(x)%*%x)))
-uidx =   which.max(apply(Y, 2, function(y) sum(t(y)%*%y)))
-t1 = X[,tidx]
-u = Y[,uidx]
-t = matrix(rep(0,rX*1),nrow=rX,ncol=1)
-
-## iteration for outer modeling until convergence
-while (norm(t1-t) > tol2){
-  w = t(X)%*%u
-  w = w/norm(w,"2")
-  t = t1
-  t1 = X%*%w;
-  q = t(Y)%*%t1
-q = q/norm(q);
-u = Y%*%q
+pls<-function(x,y,A){
+  b<-matrix(rep(0,dim(x)[2]*A),ncol=A,nrow=dim(x)[2])
+  V=t(x)%*%y
+  b[,1]=V%*%(solve((t(x%*%V)%*%(x%*%V)))%*%t(x%*%V)%*%y)
+  for (a in 2:A){
+    V = cbind(b, t(x)%*%(x%*%b[,a-1]))
+    inv=pseudoinverse((t(x%*%V)%*%(x%*%V)))
+    b[,a] = V%*%(inv%*%t(x%*%V)%*%y)
+  }
+  return(b)
 }
 
+library(corpcor)
+res<-pls(xs,ys,10)
+print(res)
 
-##update p based on t
-t=t1
-p=t(X)%*%t
-p=p/(rep(t(t)%*%t,length(p)))
-pnorm=norm(p,"2")
-p=p/pnorm
-t=pnorm*t
-w=pnorm*w
+###          [,1]         [,2]         [,3]         [,4]         [,5]         [,6]
+##  [1,] 0.10374102  0.248608973  0.108041479  0.108042295  0.108042295  0.108042295
+## [2,] 0.11197002  0.228775914  0.246127434  0.246127950  0.246127950  0.246127950
+## [3,] 0.11295348  0.192276121  0.258297529  0.258297818  0.258297818  0.258297818
+## [4,] 0.11111948  0.152344493  0.224179464  0.224179564  0.224179564  0.224179564
+## [5,] 0.10773681  0.113182333  0.170006316  0.170006256  0.170006256  0.170006256
+## [6,] 0.10346293  0.076747981  0.109175440  0.109175244  0.109175244  0.109175244
+## [7,] 0.09872470  0.043996785  0.048808745  0.048808433  0.048808433  0.048808433
+## [8,] 0.09382921  0.015301616 -0.007304386 -0.007304795 -0.007304795 -0.007304795
+## [9,] 0.08900149 -0.009339865 -0.057358740 -0.057359230 -0.057359230 -0.057359230
+## [10,] 0.08439871 -0.030171439 -0.100771066 -0.100771621 -0.100771621 -0.100771621
+## [,7]         [,8]         [,9]        [,10]
+## [1,]  0.108042295  0.108042295  0.108042295  0.108042295
+## [2,]  0.246127950  0.246127950  0.246127950  0.246127950
+## [3,]  0.258297818  0.258297818  0.258297818  0.258297818
+## [4,]  0.224179564  0.224179564  0.224179564  0.224179564
+## [5,]  0.170006256  0.170006256  0.170006256  0.170006256
+## [6,]  0.109175244  0.109175244  0.109175244  0.109175244
+## [7,]  0.048808433  0.048808433  0.048808433  0.048808433
+## [8,] -0.007304795 -0.007304795 -0.007304795 -0.007304795
+## [9,] -0.057359230 -0.057359230 -0.057359230 -0.057359230
+## [10,] -0.100771621 -0.100771621 -0.100771621 -0.100771621
 
-## regression and residuals
-b = (t(u)%*%t)/(t(t)%*%t)
-X = X - t%*%t(p)
-Y = Y - as.numeric(b)*t%*%t(q)
-## save iteration results to outputs:
-  k=k+1
-  T[,k]=t
-  P[,k]=p
-  U[,k]=u
-  Q[,k]=q
-  W[,k]=w
-  B[k,k]=b
-
-}
-  #B=B[1:k,1:k]
-  return(list(T=T,P=P,U=U,Q=Q,B=B,W=W))
-}
-
-res<-PLS(xs,ys,0.0000001,0.0000001)
-res$B
-res$W%*%solve(t(res$P)%*%res$W)%*%t(res$Q)
 #install.packages("pls")
 library(pls)
 mod <- plsr(ys ~ xs)
 mod$coefficients
+
+##, , 1 comps
+
+##ys
+##X 0.10374102
+##0.11197002
+##0.11295348
+##0.11111948
+##0.10773681
+##0.10346293
+##0.09872470
+##0.09382921
+##0.08900149
+##0.08439871
+## , , 2 comps
+
+##ys
+##X  0.248608973
+##0.228775914
+##0.192276121
+##0.152344493
+##0.113182333
+##0.076747981
+##0.043996785
+##0.015301616
+##-0.009339865
+##-0.030171439
+
+##, , 3 comps
+
+##ys
+##X  0.108041599
+##0.246127419
+##0.258297473
+##0.224179403
+##0.170006268
+##0.109175413
+##0.048808741
+##-0.007304366
+##-0.057358700
+##-0.100771006
+
+##, , 4 comps
+
+##ys
+##X -0.009726948
+##0.412207497
+##0.356923110
+##0.216358163
+##0.088573866
+##0.003442961
+##-0.036746431
+##-0.039550147
+##-0.015002716
+##0.027525111
+
+##, , 5 comps
+
+##ys
+##X  0.01264788
+##0.32267605
+##0.41316120
+##0.27436972
+##0.10186606
+##-0.02483618
+##-0.08236614
+##-0.07458963
+##-0.01576077
+##0.07798271
+
+##, , 6 comps
+
+##ys
+##X  0.02730447
+##0.19811523
+##0.66199280
+##0.23469330
+##-0.06347271
+##-0.11245017
+##-0.02100761
+##0.07297073
+##0.07320266
+##-0.06673316
+
+##, , 7 comps
+
+##ys
+##X  0.02845150
+##0.16694116
+##0.79918682
+##0.04850845
+##-0.07768959
+##0.01836086
+##0.05431280
+##-0.00585938
+##-0.05802016
+##0.03043647
+
+##, , 8 comps
+
+##ys
+##X  0.02832224
+##0.16188859
+##0.84514762
+##-0.08940587
+##0.07728967
+##0.02996910
+##-0.06514252
+##-0.02755859
+##0.07065953
+##-0.02654052
+
+##, , 9 comps
+
+##ys
+##X  0.02806187
+##0.16017841
+##0.89034434
+##-0.34209378
+##0.71144094
+##-0.70449764
+##0.08192985
+##0.50299321
+##-0.44934061
+##0.12559953
+
+##, , 10 comps
+
+##ys
+##X  0.02763143
+##0.16199599
+##0.94902433
+##-0.97351171
+##3.50841843
+##-7.54913498
+##10.07227116
+##-8.17826993
+##3.70324622
+##-0.71705781
+
