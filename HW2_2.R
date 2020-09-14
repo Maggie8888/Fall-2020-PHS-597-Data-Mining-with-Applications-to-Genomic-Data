@@ -101,10 +101,12 @@ Y = Y - as.numeric(b)*t%*%t(q)
   B[k,k]=b
 
 }
-  B=B[1:k,1:k]
+  #B=B[1:k,1:k]
   return(list(T=T,P=P,U=U,Q=Q,B=B,W=W))
 }
 
-res<-PLS(xs,ys,0.01,0.01)
+res<-PLS(xs,ys,0.01,0.000001)
 res$B
+res$B%*%t(res$Q)
+                         
 
