@@ -29,9 +29,9 @@ class Algorithm:
     return x, y
 
 
-  def __init__(self,tol1=0.001, tol2=1):
-    self.tol1 = 0.001
-    self.tol2 = 1
+  def __init__(self,tol1=0.000001, tol2=0.000001):
+    self.tol1 = 0.01
+    self.tol2 = 0.01
 
   def colMaxSum(self,mat): 
     # Variable to store index of column 
@@ -157,7 +157,7 @@ if __name__=='__main__':
 
 print(B)
 print(np.diagonal(B))
-print(np.dot(B,np.transpose(Q)))
+print(np.dot(np.dot(W,np.linalg.inv(np.dot(np.transpose(P),W))),np.transpose(Q)))
 
 np.random.seed(123456789)
 n = 1000

@@ -105,9 +105,9 @@ Y = Y - as.numeric(b)*t%*%t(q)
   return(list(T=T,P=P,U=U,Q=Q,B=B,W=W))
 }
 
-res<-PLS(xs,ys,0.0001,0.0000001)
+res<-PLS(xs,ys,0.0000001,0.0000001)
 res$B
-res$B%*%t(res$Q)
+res$W%*%solve(t(res$P)%*%res$W)%*%t(res$Q)
 #install.packages("pls")
 library(pls)
 mod <- plsr(ys ~ xs)
