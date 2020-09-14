@@ -57,7 +57,7 @@ B=matrix(rep(0,n*n),nrow=n,ncol=n)
 W=P
 k=0
 ## iteration loop if residual is larger than specfied
-while (norm(Y)>tol1 && k<n && !is.na(norm(Y))){
+while (norm(Y)>tol1 && k<n && !is.na(norm(Y,"2"))){
 ## choose the column of x has the largest square of sum as t.
 ## choose the column of y has the largest square of sum as u.    
 tidx =  which.max(apply(X, 2, function(x) sum(t(x)%*%x)))
@@ -69,7 +69,7 @@ t = matrix(rep(0,rX*1),nrow=rX,ncol=1)
 ## iteration for outer modeling until convergence
 while (norm(t1-t) > tol2){
   w = t(X)%*%u
-  w = w/norm(w)
+  w = w/norm(w,"2")
   t = t1
   t1 = X%*%w;
   q = t(Y)%*%t1
@@ -82,7 +82,7 @@ u = Y%*%q
 t=t1
 p=t(X)%*%t
 p=p/(rep(t(t)%*%t,length(p)))
-pnorm=norm(p)
+pnorm=norm(p,"2")
 p=p/pnorm
 t=pnorm*t
 w=pnorm*w
@@ -101,10 +101,14 @@ Y = Y - as.numeric(b)*t%*%t(q)
   B[k,k]=b
 
 }
-  B=B[1:k,1:k]
+  #B=B[1:k,1:k]
   return(list(T=T,P=P,U=U,Q=Q,B=B,W=W))
 }
 
-res<-PLS(xs,ys,0.01,0.01)
+res<-PLS(xs,ys,0.0001,0.0000001)
 res$B
-
+res$B%*%t(res$Q)
+#install.packages("pls")
+library(pls)
+mod <- plsr(ys ~ xs)
+mod$coefficients
