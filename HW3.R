@@ -19,21 +19,21 @@ p<-ggplot(plot_data,aes(x,y, shape = factor(group))) +
   geom_point(colour = "grey90", size = 1.5)
 
 
-x=cbind(rep(1,300),rbind(x1,x2,x3));
-y=matrix(0,nrow=300,ncol=3);
+x=cbind(rep(1,300),rbind(x1,x2,x3))
+y=matrix(0,nrow=300,ncol=3)
 y[1:100,1]=1
-y[101:200,2]=1;
-y[201:300,3]=1;
+y[101:200,2]=1
+y[201:300,3]=1
 #obtain regression coefficient;
-b=ginv(t(x)%*%x)%*%(t(x)%*%y);
-#predict values of Y;
-yhat=x%*%b;
+b=ginv(t(x)%*%x)%*%(t(x)%*%y)
+#predict values of Y
+yhat=x%*%b
 #The classification is done using the predicted values of yhat;
-y.pred=apply(yhat,1,which.max);
+y.pred=apply(yhat,1,which.max)
 # draw decision boundary using the estimated coefficient of b; 
-b12=b[,1]-b[,2];
-b23=b[,2]-b[,3];
-b13=b[,1]-b[,3];
+b12=b[,1]-b[,2]
+b23=b[,2]-b[,3]
+b13=b[,1]-b[,3]
 # draw decision boundary on top of the graph; 
 p + geom_abline(intercept = -b12[1]/b12[3], slope = -b12[2]/b12[3], color="red", 
             linetype="dashed", size=1)+
@@ -49,11 +49,14 @@ x1=rmvnorm(100,mean=c(1,1),sigma=0.01*diag(2))
 x2=rmvnorm(100,mean=c(2,2),sigma=0.1*diag(2))
 x3=rmvnorm(100,mean=c(3,3),sigma=0.01*diag(2))
 
-x=rbind(x1,x2,x3);n=nrow(x)
-mu1=colMeans(x1);mu2=colMeans(x2);mu3=colMeans(x3);
-pi1=nrow(x1)/(nrow(x1)+nrow(x2)+nrow(x3));
-pi2=nrow(x2)/(nrow(x1)+nrow(x2)+nrow(x3));
-pi3=nrow(x3)/(nrow(x1)+nrow(x2)+nrow(x3));
+x=rbind(x1,x2,x3)
+n=nrow(x)
+mu1=colMeans(x1)
+mu2=colMeans(x2)
+mu3=colMeans(x3)
+pi1=nrow(x1)/(nrow(x1)+nrow(x2)+nrow(x3))
+pi2=nrow(x2)/(nrow(x1)+nrow(x2)+nrow(x3))
+pi3=nrow(x3)/(nrow(x1)+nrow(x2)+nrow(x3))
 sigma=1/(n-3)*((t(x1)-mu1)%*%(x1-mu1)+(t(x2)-mu2)%*%(x2-mu2)+(t(x3)-mu3)%*%(x3-mu3))
 #decision boundary:
 b12=ginv(sigma)%*%(mu2-mu1)
