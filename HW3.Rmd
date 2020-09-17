@@ -9,7 +9,6 @@ header-includes: \usepackage{table,tabular,ragged2e,booktabs,caption,fontenc,inp
 
 ```{r, include=FALSE}
 rm(list=ls())
-#setwd('~/Dropbox/biostatistics_PSU/PHS528/Ex/')
 library(ggplot2)
 library(readxl)
 library(dplyr)         
