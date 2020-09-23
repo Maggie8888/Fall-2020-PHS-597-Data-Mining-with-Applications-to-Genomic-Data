@@ -1,4 +1,5 @@
 
+
 ## illustration of a scenario where linear regression on the indicator matrix cannot distinguish classes 
 rm(list=ls())
 library(MASS)
