@@ -10,12 +10,15 @@ Original file is located at
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from scipy import linalg
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
 from matplotlib import style
 style.use('fivethirtyeight')
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from matplotlib import colors
 np.random.seed(1234567)
 # simulate data 
 
@@ -134,3 +137,87 @@ for color, i, target_name in zip(colors, [1, 2, 3], target_names):
 plt.legend(loc='best', shadow=False, scatterpoints=1)
 plt.title('LDA')
 
+### code modifed based on https://scikit-learn.org/stable/auto_examples/classification/plot_lda_qda.html
+
+# Plot functions
+def plot_data(lda, X, y, y_pred, fig_index):
+    splot = plt.subplot(1,2, fig_index)
+    if fig_index == 1:
+        plt.title('Linear Discriminant Analysis')
+        plt.ylabel('Data with\n fixed covariance')
+    elif fig_index == 2:
+        plt.title('Quadratic Discriminant Analysis')
+    
+    tp = (y == y_pred)  # True Positive
+    tp1, tp2, tp3 = tp[y == 1], tp[y == 2],tp[y == 3]
+    X1, X2, X3 = X[y == 1], X[y == 2],X[y == 3]
+    X1_tp, X1_fp = X1[tp1], X1[~tp1]
+    X2_tp, X2_fp = X2[tp2], X2[~tp2]
+    X3_tp, X3_fp = X3[tp3], X3[~tp3]
+
+    # class 1: dots
+    plt.scatter(X1_tp[[1]], X1_tp[[2]], marker='.', color='red')
+    plt.scatter(X1_fp[[1]], X1_fp[[2]], marker='x',
+                s=20, color='#990000')  
+
+    # class 2: dots
+    plt.scatter(X2_tp[[1]], X2_tp[[2]], marker='.', color='blue')
+    plt.scatter(X2_fp[[1]], X2_fp[[2]], marker='x',
+                s=20, color='#000099')  
+
+    # class 3: dots
+    plt.scatter(X3_tp[[1]], X3_tp[[2]], marker='.', color='green')
+    plt.scatter(X3_fp[[1]], X3_fp[[2]], marker='x',
+                s=20, color='#009109')  
+
+    # class: areas
+    nx, ny = 200, 100
+    x_min, x_max = plt.xlim()
+    y_min, y_max = plt.ylim()
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, nx),
+                         np.linspace(y_min, y_max, ny))
+    Z = lda.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z[:, 1].reshape(xx.shape)
+    #plt.pcolormesh(xx, yy, Z, cmap='red_blue_classes',
+    #               norm=colors.Normalize(0., 1.), zorder=0)
+    plt.contour(xx, yy, Z, [0.5], linewidths=2., colors='white')
+
+    # means
+    plt.plot(lda.means_[0][0], lda.means_[0][1],
+             '*', color='yellow', markersize=15, markeredgecolor='grey')
+    plt.plot(lda.means_[1][0], lda.means_[1][1],
+             '*', color='yellow', markersize=15, markeredgecolor='grey')
+    plt.plot(lda.means_[2][0], lda.means_[2][1],
+             '*', color='yellow', markersize=15, markeredgecolor='grey')
+    return splot
+
+
+
+def plot_ellipse(splot, mean, cov, color):
+    v, w = linalg.eigh(cov)
+    u = w[0] / linalg.norm(w[0])
+    angle = np.arctan(u[1] / u[0])
+    angle = 180 * angle / np.pi  # convert to degrees
+    # filled Gaussian at 2 standard deviation
+    ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
+                              180 + angle, facecolor=color,
+                              edgecolor='black', linewidth=2)
+    ell.set_clip_box(splot.bbox)
+    ell.set_alpha(0.2)
+    splot.add_artist(ell)
+    splot.set_xticks(())
+    splot.set_yticks(())
+
+
+
+def plot_qda_cov(qda, splot):
+    plot_ellipse(splot, qda.means_[0], qda.covariance_[0], 'red')
+    plot_ellipse(splot, qda.means_[1], qda.covariance_[1], 'blue')
+    plot_ellipse(splot, qda.means_[2], qda.covariance_[2], 'green')
+
+# Quadratic Discriminant Analysis
+qda = QuadraticDiscriminantAnalysis(store_covariance=True)
+y_pred = qda.fit(X, y).predict(X)
+splot = plot_data(qda, X, y, y_pred,2)
+plot_qda_cov(qda, splot)
+plt.show()
