@@ -143,6 +143,7 @@ gaussianKernel <- function(x1,x2, sigma) {
 }
 
 
+
 polynomialKernel <- function(x1,x2, d) {
   sim <-(t(x1)%*%x2+1)^d
   return(sim)
@@ -192,7 +193,7 @@ svmPredict <- function(model, X,kernelFunction,sigma,d) {
   
   
   pred[p >= 0] <- 1
-  pred[p < 0] <- 0
+  pred[p < 0] <- -1
   return(pred)
 }
 
@@ -238,9 +239,14 @@ plot<-function(x, X, y, type, title="", xlab="", ylab="",sigma,d){
                      y= as.vector(X2),
                     z=as.vector(vals))
    
-    p<-ggplot(vm, aes(x =x, y = y, shape = factor(z))) +
-      geom_point(colour = "grey90", size = 1.5) + 
-     geom_density_2d(aes(colour = z))
+    #p<-ggplot(vm, aes(x =x, y = y, shape = factor(z))) +
+    #  geom_point(colour = "grey90", size = 1.5) + 
+    # geom_density_2d(aes(colour = z))+stat_contour(breaks = c(0))
+    
+    p<-ggplot(vm, aes(x =x, y = y, z=z),shape = factor(z)) +
+      geom_point(aes(colour=z)) + 
+    stat_contour(breaks = c(0))
+    
     
   }
   
