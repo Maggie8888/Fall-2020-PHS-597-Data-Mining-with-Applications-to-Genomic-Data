@@ -3,7 +3,7 @@ rm(list=ls())
 library(MASS)
 library(mvtnorm)
 library(ggplot2)
-svm <- function(X, Y, C, kernelFunction,tol, max.iter, sigma=0.5,d=4){
+Mysvm <- function(X, Y, C, kernelFunction,tol, max.iter, sigma=0.5,d=4){
    
   ## data parameter
   m <- nrow(X)
@@ -206,7 +206,7 @@ meshgrid <- function(a, b) {
   )
 }
 
-plot<-function(x, X, y, type, title="", xlab="", ylab="",sigma,d){
+Myplot<-function(x, X, y, type, title="", xlab="", ylab="",sigma,d){
   model <- x
   match.arg(type, c("linearKernel", "gaussianKernel","polynomialKernel"))
   plot_data<-as.data.frame(X)
@@ -267,20 +267,34 @@ y[1:100,1]=1
 y[101:200,1]=-1
 C=0.1
 
-model<-svm(X, y, C,"linearKernel",
+model<-Mysvm(X, y, C,"linearKernel",
                 tol=1e-4, max.iter=20,sigma=0.5,d=4)
 pred<-svmPredict(model,X,"linearKernel",sigma=0.5,4)
-plot(model, X, y,"linearKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+Myplot(model, X, y,"linearKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
 
-model<-svm(X, y, C,"gaussianKernel",
+model<-Mysvm(X, y, C,"gaussianKernel",
                 tol=1e-4, max.iter=20,sigma=0.5,d=4)
 pred<-svmPredict(model,X,"gaussianKernel",sigma=0.5,4)
-plot(model, X, y,"gaussianKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+Myplot(model, X, y,"gaussianKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
 
-model<-svm(X, y, C,"polynomialKernel",
+model<-Mysvm(X, y, C,"polynomialKernel",
                      tol=1e-4, max.iter=20, sigma=0.5,d=4)
 pred<-svmPredict(model,X,"polynomialKernel",sigma=0.5,4)
-plot(model, X, y,"polynomialKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+Myplot(model, X, y,"polynomialKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+##################### using existed function #################
+library(e1071)
+
+m <- svm(y ~ X, scale = FALSE, kernel = "linear")
+coef(m)
+plot_data<-as.data.frame(X)
+plot_data<-cbind(plot_data,as.factor(y))
+colnames(plot_data)<-c("X1","X2","y")
+p <- ggplot(data=plot_data, aes_string(x=colnames(plot_data)[1], y=colnames(plot_data)[2])) +
+  geom_point(aes(colour=y))+geom_abline(intercept = -coef(m)[1]/coef(m)[3],
+                                        slope = -coef(m)[2]/coef(m)[3],
+                                        colour = "red")
+
+p
 
 ##### linear non-seperable case ####
 x1=rmvnorm(100,mean=c(1,1),sigma=0.5*diag(2))
@@ -294,18 +308,48 @@ y<-ifelse(X[,1]>0|X[,2]>0,1,-1)
 
 C=100
 
-model<-svm(X, y, C,"linearKernel",
+model<-Mysvm(X, y, C,"linearKernel",
            tol=1e-4, max.iter=20,sigma=0.5,d=4)
 pred<-svmPredict(model,X,"linearKernel",sigma=0.5,4)
-plot(model, X, y,"linearKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+Myplot(model, X, y,"linearKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
 
-model<-svm(X, y, C,"gaussianKernel",
+model<-Mysvm(X, y, C,"gaussianKernel",
            tol=1e-4, max.iter=20,sigma=0.5,d=4)
 pred<-svmPredict(model,X,"gaussianKernel",sigma=0.5,4)
-plot(model, X, y,"gaussianKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+Myplot(model, X, y,"gaussianKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
 
-model<-svm(X, y, C,"polynomialKernel",
+model<-Mysvm(X, y, C,"polynomialKernel",
            tol=1e-4, max.iter=20, sigma=0.5,d=4)
 pred<-svmPredict(model,X,"polynomialKernel",sigma=0.5,4)
-plot(model, X, y,"polynomialKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+Myplot(model, X, y,"polynomialKernel", title="", xlab="", ylab="",sigma=0.5,d=4)
+
+
+############## using existed function ########
+
+m <- svm(y ~ X, scale = FALSE, kernel = "radial",gamma=0.5,degree=4,cost=1)
+m$decision.values
+predict(m,X)
+
+xr <- seq(min(X[,1]), max(X[,1]), length.out=200)
+yr <- seq(min(X[,2]), max(X[,2]), length.out=200)
+mg <- meshgrid(xr, yr)
+X1 <- mg[[1]]
+X2 <- mg[[2]]
+vm<-as.data.frame(cbind(X1,X2))
+vals <- matrix(0, ncol=ncol(X1), nrow=nrow(X1))
+z<-vector()
+for (i in 1:ncol(X1)){
+  thisX <- cbind(X1[,i], X2[,i])
+  vals[,i] <-  predict(m, thisX)
+}
+
+vm <- data.frame(x=as.vector(X1),
+                 y= as.vector(X2),
+                 z=as.vector(vals))
+
+
+p<-ggplot(vm, aes(x =x, y = y, z=z),shape = factor(z)) +
+  geom_point(aes(colour=z)) + 
+  stat_contour(breaks = c(0))
+p
 
